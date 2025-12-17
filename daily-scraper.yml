@@ -1,0 +1,36 @@
+yamlname: Daily Presse Citron Scraper
+
+on:
+  schedule:
+    - cron: '0 9 * * *'  # Tous les jours à 9h UTC
+  workflow_dispatch:  # Permet lancement manuel
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          pip install anthropic requests
+      
+      - name: Run scraper
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: python scraper_agent.py
+      
+      - name: Commit results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add articles_presse_citron.json
+          git commit -m "Update articles $(date +'%Y-%m-%d')" || echo "No changes"
+          git push
